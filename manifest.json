@@ -1,5 +1,5 @@
 {
-  "short_name": "butterfly Chat",
+  "short_name": "Butterfly Chat",
   "name": "chat app",
   "icons": [
     {
@@ -8,12 +8,12 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "faviconi.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "faviconi.png",
       "type": "image/png",
       "sizes": "512x512"
     }
