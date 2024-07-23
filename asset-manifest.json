@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/butterflychat/static/css/main.ec6dcf85.css",
+    "main.js": "/butterflychat/static/js/main.66d25b6f.js",
+    "static/js/453.6965a73a.chunk.js": "/butterflychat/static/js/453.6965a73a.chunk.js",
+    "index.html": "/butterflychat/index.html",
+    "main.ec6dcf85.css.map": "/butterflychat/static/css/main.ec6dcf85.css.map",
+    "main.66d25b6f.js.map": "/butterflychat/static/js/main.66d25b6f.js.map",
+    "453.6965a73a.chunk.js.map": "/butterflychat/static/js/453.6965a73a.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ec6dcf85.css",
+    "static/js/main.66d25b6f.js"
+  ]
+}
