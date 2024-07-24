@@ -125,7 +125,7 @@ function CreateChatRoom({ onRoomCreated }) {
         placeholder="Chat Room Name"
         required
       />
-      <button type="submit">Create Chat Room</button>
+      <button type="submit">Create Room</button>
     </form>
   );
 }
