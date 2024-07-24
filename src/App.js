@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 import firebase from 'firebase/compat/app';
@@ -10,7 +10,6 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 
 firebase.initializeApp({
-  // your config
   apiKey: "AIzaSyBbCqrGT-Ny7tIXd-HiCRrKxjbqzDExL2A",
   authDomain: "butterflychat-dc0bc.firebaseapp.com",
   projectId: "butterflychat-dc0bc",
@@ -26,16 +25,42 @@ const analytics = firebase.analytics();
 
 function App() {
   const [user] = useAuthState(auth);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [roomName, setRoomName] = useState('');
+
+  useEffect(() => {
+    if (selectedRoom) {
+      const unsubscribe = firestore.collection('chatRooms').doc(selectedRoom).onSnapshot(doc => {
+        setRoomName(doc.data()?.name || 'Chat Room');
+      });
+      return () => unsubscribe();
+    }
+  }, [selectedRoom]);
 
   return (
     <div className="App">
       <header>
-        <h1>🦋💬</h1>
-        <SignOut />
+        <h1>{roomName ? `🦋💬 ${roomName}` : '🦋💬'}</h1>
+        {selectedRoom ? (
+          <button className="back-to-list" onClick={() => setSelectedRoom(null)}>Back to Room List</button>
+        ) : (
+          <SignOut />
+        )}
       </header>
 
       <section>
-        {user ? <ChatRoom /> : <SignIn />}
+        {user ? (
+          selectedRoom ? (
+            <ChatRoom roomId={selectedRoom} />
+          ) : (
+            <>
+              <CreateChatRoom onRoomCreated={() => setSelectedRoom(null)} />
+              <RecentChatRooms onJoin={setSelectedRoom} />
+            </>
+          )
+        ) : (
+          <SignIn />
+        )}
       </section>
     </div>
   );
@@ -65,9 +90,6 @@ function SignIn() {
       <button className="sign-in" onClick={signInWithGoogle} disabled={loading}>
         {loading ? 'Signing in...' : 'Sign in with Google'}
       </button>
-      <p>Chat anything do not share private information
-        
-      </p>
     </>
   );
 }
@@ -78,13 +100,64 @@ function SignOut() {
   );
 }
 
-function ChatRoom() {
+function CreateChatRoom({ onRoomCreated }) {
+  const [roomName, setRoomName] = useState('');
+
+  const createRoom = async (e) => {
+    e.preventDefault();
+    try {
+      await firestore.collection('chatRooms').add({
+        name: roomName,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setRoomName('');
+      onRoomCreated();
+    } catch (error) {
+      console.error("Error creating chat room: ", error);
+    }
+  };
+
+  return (
+    <form onSubmit={createRoom}>
+      <input
+        value={roomName}
+        onChange={(e) => setRoomName(e.target.value)}
+        placeholder="Chat Room Name"
+        required
+      />
+      <button type="submit">Create Chat Room</button>
+    </form>
+  );
+}
+
+function RecentChatRooms({ onJoin }) {
+  const [chatRooms, setChatRooms] = useState([]);
+
+  useEffect(() => {
+    const unsubscribe = firestore.collection('chatRooms').orderBy('createdAt', 'desc').limit(5).onSnapshot(snapshot => {
+      const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setChatRooms(rooms);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <ul>
+      {chatRooms.map(room => (
+        <li key={room.id} onClick={() => onJoin(room.id)}>
+          {room.name}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ChatRoom({ roomId }) {
   const dummy = useRef();
-  const messagesRef = firestore.collection('messages');
+  const messagesRef = firestore.collection('chatRooms').doc(roomId).collection('messages');
   const query = messagesRef.orderBy('createdAt').limit(25);
 
   const [messages] = useCollectionData(query, { idField: 'id' });
-
   const [formValue, setFormValue] = useState('');
 
   const sendMessage = async (e) => {
@@ -103,6 +176,12 @@ function ChatRoom() {
     dummy.current.scrollIntoView({ behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    if (dummy.current) {
+      dummy.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
   return (
     <>
       <main>
@@ -111,8 +190,12 @@ function ChatRoom() {
       </main>
 
       <form onSubmit={sendMessage}>
-        <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="say something nice" />
-        <button type="submit" disabled={!formValue}>✈️</button>
+        <input 
+          value={formValue} 
+          onChange={(e) => setFormValue(e.target.value)} 
+          placeholder="Type your message..." 
+        />
+        <button type="submit" disabled={!formValue}>Send</button>
       </form>
     </>
   );
